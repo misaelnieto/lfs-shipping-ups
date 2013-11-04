@@ -2,5 +2,5 @@
 *.pyc
 *.pyo
 *.DS_Store
-./*.egg-info/
+lfs_shipping_ups.egg-info/
 .codeintel/

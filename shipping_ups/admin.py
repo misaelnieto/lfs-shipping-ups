@@ -1,6 +1,5 @@
 # django imports
 from django.contrib import admin
+from .models import UPSConfiguration
 
-from .models import UPSConfiguraton
-
-admin.site.register(UPSConfiguraton)
+admin.site.register(UPSConfiguration)
