@@ -1,0 +1,6 @@
+*.sublime-workspace
+*.pyc
+*.pyo
+*.DS_Store
+./*.egg-info/
+.codeintel/
