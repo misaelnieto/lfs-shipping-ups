@@ -1,13 +1,19 @@
-from ups.client import UPSClient
-from ups.model import Package, Address
 from django.contrib.sites.models import get_current_site
+
+from lfs.cart.utils import get_cart
 from lfs.customer.utils import get_customer
 from lfs.plugins import ShippingMethodPriceCalculator
+
+from ups.client import UPSClient
+from ups.model import Package, Address
 
 from .models import UPSConfiguration
 
 
 class UPSPriceCalculator(ShippingMethodPriceCalculator):
+    #Cache price
+    _price = None
+
     def _ups_config(self):
         site = get_current_site(self.request)
         return UPSConfiguration.objects.get(site=site)
@@ -42,28 +48,40 @@ class UPSPriceCalculator(ShippingMethodPriceCalculator):
             country=ship_address.country.code
         )
 
-        packages = [Package(2, 3, 4, 5)]
-        ups = UPSClient(credentials)
-        return ups.rate(
-            packages=packages,
-            packaging_type='2a',
-            shipper=shipper,
-            recipient=recipient
-        )
+        cart = get_cart(self.request)
 
+        #weight, length, width, height
+        product_info = [0, 0, 0, 0] 
+        for line_item in cart.get_items():
+            product_info[0] += line_item.product.weight
+            product_info[1] += line_item.product.length
+            product_info[2] += line_item.product.width
+            product_info[3] += line_item.product.height
+
+        quote = 0.0
+        if all(product_info):
+            packages = [Package(*product_info)]
+            ups = UPSClient(credentials, weight_unit='KGS', dimension_unit='CM', currency_code='USD')
+            response = ups.rate(
+                packages=packages,
+                packaging_type=ups_cfg.default_packaging_type,
+                shipper=shipper,
+                recipient=recipient
+            )
+            quote = float(response['info'][0]['cost'])
+
+        return quote
 
     def get_price_net(self):
-        #XXX No error handler :P
-        response = self._get_quote()
-        return float(response['info'][0]['cost'])
+        return self.get_price_gross()
 
     def get_price_gross(self):
+        #XXX No error handler :P
         # return self.get_price_net() * ((100 + self.shipping_method.tax.rate) / 100)
-        return self.get_price_net()
+        if self._price is None:
+            self._price = self._get_quote()
+        return self._price
 
     def get_tax(self):
-        """
-        Returns the total tax of the shipping method.
-        """
-        return self.get_price_gross() - self.get_price_net()
-
+        #How do I calculate taxes?
+        return 0.0

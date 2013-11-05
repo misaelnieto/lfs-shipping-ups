@@ -4,6 +4,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from lfs.core.models import Country
 
+from ups.client import PACKAGES as UPS_PACKAGES
+
 
 class UPSConfiguration(models.Model):
     """
@@ -15,6 +17,13 @@ class UPSConfiguration(models.Model):
     password = models.CharField(_('Password'), max_length=128)
     shipper_number = models.CharField(_('Shipper Number'), max_length=128)
     access_license = models.CharField(_('API Key'), max_length=128)
+
+    default_packaging_type = models.CharField(
+        _('Default package type'),
+        max_length=2,
+        choices=UPS_PACKAGES,
+        default='02', #UPS Custom packaging
+    )
 
     shipper_name = models.CharField(_('Company name'), max_length=256)
     shipper_address = models.CharField(_('Address'), max_length=256)
