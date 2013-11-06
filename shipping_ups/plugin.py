@@ -4,7 +4,7 @@ from lfs.cart.utils import get_cart
 from lfs.customer.utils import get_customer
 from lfs.plugins import ShippingMethodPriceCalculator
 
-from ups.client import UPSClient
+from ups.client import UPSClient, UPSError
 from ups.model import Package, Address
 
 from .models import UPSConfiguration
@@ -53,15 +53,16 @@ class UPSPriceCalculator(ShippingMethodPriceCalculator):
         #weight, length, width, height
         product_info = [0, 0, 0, 0] 
         for line_item in cart.get_items():
-            product_info[0] += line_item.product.weight
-            product_info[1] += line_item.product.length
-            product_info[2] += line_item.product.width
-            product_info[3] += line_item.product.height
+            product_info[0] += line_item.product.weight * line_item.amount
+            product_info[1] += line_item.product.length * line_item.amount
+            product_info[2] += line_item.product.width * line_item.amount
+            product_info[3] += line_item.product.height * line_item.amount
 
+        #import pdb; pdb.set_trace()
         quote = 0.0
         if all(product_info):
             packages = [Package(*product_info)]
-            ups = UPSClient(credentials, weight_unit='KGS', dimension_unit='CM', currency_code='USD')
+            ups = UPSClient(credentials)
             response = ups.rate(
                 packages=packages,
                 packaging_type=ups_cfg.default_packaging_type,
@@ -78,9 +79,12 @@ class UPSPriceCalculator(ShippingMethodPriceCalculator):
     def get_price_gross(self):
         #XXX No error handler :P
         # return self.get_price_net() * ((100 + self.shipping_method.tax.rate) / 100)
-        if self._price is None:
-            self._price = self._get_quote()
-        return self._price
+        try:
+            if self._price is None:
+                self._price = self._get_quote()
+            return self._price
+        except UPSError:
+            return  0.0
 
     def get_tax(self):
         #How do I calculate taxes?
