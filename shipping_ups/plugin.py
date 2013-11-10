@@ -29,7 +29,7 @@ class UPSPriceCalculator(ShippingMethodPriceCalculator):
         }
 
         shipper = Address(
-            name=ups_cfg.shipper_name, 
+            name=ups_cfg.shipper_name,
             address=ups_cfg.shipper_address,
             city=ups_cfg.shipper_city,
             state=ups_cfg.shipper_state,
@@ -51,7 +51,7 @@ class UPSPriceCalculator(ShippingMethodPriceCalculator):
         cart = get_cart(self.request)
 
         #weight, length, width, height
-        product_info = [0, 0, 0, 0] 
+        product_info = [0, 0, 0, 0]
         for line_item in cart.get_items():
             product_info[0] += line_item.product.weight * line_item.amount
             product_info[1] += line_item.product.length * line_item.amount
