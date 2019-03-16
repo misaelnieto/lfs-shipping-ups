@@ -40,8 +40,8 @@ class UPSPriceCalculator(ShippingMethodPriceCalculator):
         customer = get_customer(self.request)
         ship_address = customer.get_selected_shipping_address()
         recipient = Address(
-            name=' '.join([ship_address.firstname, ship_address.lastname]),
-            address=' '.join([ship_address.line1, ship_address.line2]),
+            name=' '.join([ship_address.firstname or '', ship_address.lastname or '']),
+            address=' '.join([ship_address.line1 or '', ship_address.line2 or '']),
             city=ship_address.city,
             state=ship_address.state,
             zip=ship_address.zip_code,
